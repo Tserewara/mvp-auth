@@ -22,6 +22,7 @@ from mvpauth.core.exceptions import (
 )
 from mvpauth.integrations.fastapi.dependencies import get_current_user, get_token_payload
 from mvpauth.integrations.fastapi.router import auth_router
+from mvpauth.integrations.fastapi.routes import Routes
 
 if TYPE_CHECKING:
     pass
@@ -55,6 +56,7 @@ def install_exception_handlers(app: FastAPI) -> None:
 
 
 __all__ = [
+    "Routes",
     "auth_router",
     "get_current_user",
     "get_token_payload",

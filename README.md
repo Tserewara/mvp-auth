@@ -207,6 +207,72 @@ All routes are mounted under a configurable prefix (default: `/auth`).
 }
 ```
 
+## Route Selection
+
+By default, `auth_router(auth)` mounts all 13 routes. Use `include` and `exclude` to mount only what your MVP needs.
+
+```python
+from mvpauth.integrations.fastapi import Routes, auth_router
+```
+
+### Feature Groups
+
+Routes are organized into four groups:
+
+| Group                      | Routes included                                                    |
+|----------------------------|--------------------------------------------------------------------|
+| `Routes.CORE`              | `register`, `login`, `refresh`, `me`, `logout`                    |
+| `Routes.VERIFY`            | `verify_email`, `resend_verification`                             |
+| `Routes.PASSWORD`          | `forgot_password`, `reset_password`, `change_password`            |
+| `Routes.SESSION_MANAGEMENT`| `sessions`, `revoke_session`, `logout_all`                        |
+| `Routes.ALL`               | All of the above (default)                                        |
+
+Groups are `frozenset[str]` values, so they combine naturally with `|` and mix with individual route names.
+
+### Examples
+
+```python
+# Only core auth — register, login, refresh, me, logout
+app.include_router(
+    auth_router(auth, include=Routes.CORE),
+    prefix="/auth",
+)
+
+# Core + password management
+app.include_router(
+    auth_router(auth, include=Routes.CORE | Routes.PASSWORD),
+    prefix="/auth",
+)
+
+# Mix a group with an individual route
+app.include_router(
+    auth_router(auth, include=Routes.CORE | {Routes.CHANGE_PASSWORD}),
+    prefix="/auth",
+)
+
+# Everything except session management and email verification
+app.include_router(
+    auth_router(auth, exclude=Routes.SESSION_MANAGEMENT | Routes.VERIFY),
+    prefix="/auth",
+)
+
+# Default — all 13 routes (backward compatible)
+app.include_router(auth_router(auth), prefix="/auth")
+```
+
+### Individual Route Names
+
+For fine-grained control, use individual constants:
+
+`Routes.REGISTER`, `Routes.LOGIN`, `Routes.REFRESH`, `Routes.VERIFY_EMAIL`, `Routes.RESEND_VERIFICATION`, `Routes.FORGOT_PASSWORD`, `Routes.RESET_PASSWORD`, `Routes.ME`, `Routes.LOGOUT`, `Routes.LOGOUT_ALL`, `Routes.CHANGE_PASSWORD`, `Routes.SESSIONS`, `Routes.REVOKE_SESSION`
+
+### Resolution Rules
+
+1. **`include`** sets the base set of routes (defaults to `Routes.ALL` if omitted)
+2. **`exclude`** removes routes from the base set
+3. Unknown route names raise `ValueError`
+4. An empty result (all routes excluded) raises `ValueError`
+
 ## Email Hooks
 
 mvp-auth doesn't send emails — it calls your async callback with the email address and a signed JWT token. Wire up any email provider you want:
